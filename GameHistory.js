@@ -19,8 +19,8 @@ GameHistoryProto._get_report_JSON = function ()
 
 GameHistoryProto.add_item = function (name, url)
 {
-    //if (url.substring(0,4) == "file")
-	//    return null;
+    if (url.substring(0,4) == "file")
+	    return null;
     if (this._record_fifo.length >= this._record_max)
         delete this._name2url[this._record_fifo.shift()];
         
