@@ -4,6 +4,8 @@ var UserKlass = require('./User');
 var _channel = null;
 var RoomMgrKlas = require('./RoomMgr');
 var room_mgr = new RoomMgrKlas();
+var GameHistoryKlass = require('./GameHistory');
+var game_history = new GameHistoryKlass(100);
 
 
 avaiable_gamerooms = {};
@@ -19,6 +21,7 @@ var LobbyChannel = function (channel)
     event.on(event_define.on_gameroom_unavaiable, on_gameroom_unavaiable);
     event.on(event_define.on_chatroom_avaiable, on_chatroom_avaiable);
     event.on(event_define.on_chatroom_unavaiable, on_chatroom_unavaiable); 
+    event.on(event_define.on_joined_gameroom, on_joined_gameroom); 	
     
     channel.on('connection', on_connection); 
     _channel = channel;    
@@ -28,10 +31,9 @@ var on_connection = function (socket)
 {
     socket.on('user.initialize', function (login_info, sendback_fn)
     {
-        var room = room_mgr.get_room(login_info.room_name, login_info.room_id);
+        var room = room_mgr.get_room(login_info);
         if (room.has_space())
         {
-            room.properties_set(login_info);
             socket.join(room.key);
             var user = new UserKlass (room, socket);
             user.name = login_info.user_name;
@@ -43,8 +45,9 @@ var on_connection = function (socket)
                             "avaiable_gamerooms":get_avaiable_rooms_info(avaiable_gamerooms),
                             "avaiable_chatrooms":get_avaiable_rooms_info(avaiable_chatrooms),
                             };                                       
-            sendback_fn(ret_info);            
-            broadcast_event(room, 'user.joined', user.get_info());            
+            sendback_fn(ret_info);			
+            broadcast_event(room, 'user.joined', user.get_info());
+            socket.json.emit("game.hotrank", game_history.get_report());
         }
         else
             socket.disconnect();
@@ -125,7 +128,8 @@ var on_gameroom_avaiable = function (room)
 var on_gameroom_unavaiable = function (room)
 {
     delete avaiable_gamerooms[room.key];
-    _channel.json.emit("gameroom.unavaiable", [room.name, room.id]);
+    _channel.json.emit("gameroom.unavaiable", 
+	                   [room.properties.name, room.properties.id]);
 };
 
 var on_chatroom_avaiable = function (room)
@@ -137,8 +141,14 @@ var on_chatroom_avaiable = function (room)
 var on_chatroom_unavaiable = function (room)
 {
     delete avaiable_chatrooms[room.key];
-    _channel.json.emit("chatroom.unavaiable", [room.name, room.id]);
+    _channel.json.emit("chatroom.unavaiable", [room.properties.name, room.properties.id]);
 };
 
+var on_joined_gameroom = function (room)
+{
+    var report = game_history.add_item(room.properties.name, room.properties.src);
+	if (report != null)
+	    _channel.json.emit("game.hotrank", report);
+};
 
 module.exports = LobbyChannel;

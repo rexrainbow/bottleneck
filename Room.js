@@ -2,19 +2,29 @@ var event = require( './event' );
 var SerialNumberGenKlass = require("./SerialNumberGen");
 var util = require("./util");
 
-var Room = function (room_mgr, key, name, id)
+var Room = function (room_mgr, info)
 {     
+	if (info.is_public == null)
+	    info.is_public = true;
+	if (info.description == null)
+	    info.description = "";
+	if (info.max_users_cnt == null)
+	    info.max_users_cnt = 0;
+		
     this._room_mgr = room_mgr;
     this._sn = 0;
-    this.key = key;
-    this.name = name;    
-    this.id = id;
-    this.max_user_cnt = 0;    
+    this.key = info.key;
+    this.max_users_cnt = info.max_users_cnt;    
     this.pkg_id_gen = new SerialNumberGenKlass(1);
     this._user_id_gen = new SerialNumberGenKlass(1);
     this._users = [];
     this._is_avaiable = false;
-    this.properties = {};
+    this.properties = {src:info.src,
+	                   name:info.room_name,
+					   id:info.room_id,
+	                   description:info.description,
+					   is_public:info.is_public
+	                  };
     this.storage = {};
     this._sync_list = [];
     this._is_open = true;
@@ -23,12 +33,6 @@ var Room = function (room_mgr, key, name, id)
 
 var RoomProto = Room.prototype;
 
-RoomProto.properties_set = function (properties)
-{
-    this.properties["src"] = properties["src"];    
-    this.properties["description"] = properties["description"];
-    this.properties["is_public"] = properties["is_public"];    
-};
 
 RoomProto.state_set = function (state)
 {
@@ -41,12 +45,12 @@ RoomProto.state_set = function (state)
 
 RoomProto.get_room_info = function ()
 {   
-    return {"src":this.properties["src"],
+    return {"src":this.properties.src,
             "room_sn":this._sn,
-            "room_name":this.name,
-            "room_id":this.id,
-            "room_description":this.properties["description"],
-            "is_public":this.properties["is_public"],
+            "room_name":this.properties.name,
+            "room_id":this.properties.id,
+            "room_description":this.properties.description,
+            "is_public":this.properties.is_public,
             };
 };
 
@@ -60,10 +64,10 @@ RoomProto.has_space = function ()
     var has_space;
     if (this._is_open)
     {
-        if (this.max_user_cnt==0)
+        if (this.max_users_cnt==0)
             has_space = true;
         else
-            has_space = (this.max_user_cnt < this._users.length);
+            has_space = (this.max_users_cnt > this._users.length);
     }
     else
         has_space = false;

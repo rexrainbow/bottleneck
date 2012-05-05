@@ -1,8 +1,10 @@
 var event_define = require('./EventDefine');
+var event = require( './event' );
 var UserKlass = require('./User');
 var _channel = null;
 var RoomMgrKlas = require('./RoomMgr');
 var room_mgr = new RoomMgrKlas();
+
 
 var GameChannel = function (channel)
 {        
@@ -18,10 +20,9 @@ var on_connection = function (socket)
 {
     socket.on('user.initialize', function (login_info, sendback_fn)
     {
-        var room = room_mgr.get_room(login_info.room_name, login_info.room_id);                                     
+        var room = room_mgr.get_room(login_info);                                     
         if (room.has_space())
         {
-            room.properties_set(login_info);
             socket.join(room.key);
             var user = new UserKlass (room, socket);
             user.name = login_info.user_name;
@@ -29,9 +30,10 @@ var on_connection = function (socket)
             var ret_info = {"pkg_id":room.pkg_id_gen.value,
                             "user_id":user.id,
                             "user_info_list":room.get_user_info_list(),
-                            "room_data":room.storage};                                       
-            sendback_fn(ret_info);            
-            broadcast_event(room, 'user.joined', user.get_info());            
+                            "room_data":room.storage};                                       		
+            sendback_fn(ret_info);			
+            broadcast_event(room, 'user.joined', user.get_info());      
+			event.emit(event_define.on_joined_gameroom, room);
         }
         else
         {
