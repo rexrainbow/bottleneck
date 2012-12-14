@@ -9,6 +9,11 @@ var addr = app.address();
 console.log('app listening on http://' + addr.address + ':' + addr.port);    
 
 // assuming io is the Socket.IO server object
+io.enable('browser client minification');  // send minified client
+io.enable('browser client etag');          // apply etag caching logic based on version number
+io.enable('browser client gzip');          // gzip the file
+io.set('log level', 1);                    // reduce logging
+
 io.configure(function () { 
   io.set("transports", ["xhr-polling"]); 
   //io.set("polling duration", 10); 
