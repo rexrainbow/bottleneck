@@ -45,7 +45,9 @@ var on_connection = function (socket)
     socket.on('message', function (msg)    
     {
         socket.get('user_obj', function (err, user_obj)
-        {
+        {        
+            if (user_obj == null)
+                return;
             broadcast_message(user_obj.room, msg);
         });
     });
@@ -56,7 +58,6 @@ var on_connection = function (socket)
         {
             if (user_obj == null)
                 return;
-
             broadcast_event(user_obj.room, 'user.left', user_obj.get_info());
             user_obj.left();            
             socket.set('user_obj', null);
@@ -67,6 +68,8 @@ var on_connection = function (socket)
     {
         socket.get('user_obj', function (err, user_obj)
         {
+            if (user_obj == null)
+                return;        
             user_obj.set_max_user_cnt(max_user_cnt);
         });
     }); 
@@ -75,6 +78,8 @@ var on_connection = function (socket)
     {
         socket.get('user_obj', function (err, user_obj)
         {
+            if (user_obj == null)
+                return;        
             user_obj.kick_user(user_id);
         });
     });
@@ -83,6 +88,8 @@ var on_connection = function (socket)
     {
         socket.get('user_obj', function (err, user_obj)
         {
+            if (user_obj == null)
+                return;        
             user_obj.room.state_set(state);
         });
     });    
@@ -91,6 +98,8 @@ var on_connection = function (socket)
     {
         socket.get('user_obj', function (err, user_obj)
         {
+            if (user_obj == null)
+                return;        
             user_obj.room.storage[key] = data;
         });
     }); 
@@ -99,6 +108,8 @@ var on_connection = function (socket)
     {
         socket.get('user_obj', function (err, user_obj)
         {
+            if (user_obj == null)
+                return;        
             if (user_obj.is_sync_start())
                 broadcast_event(user_obj.room, 'room.syncStart');
         });
